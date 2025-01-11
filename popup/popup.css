@@ -1,0 +1,55 @@
+/* popup.css */
+
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 10px;
+  width: 350px;
+}
+
+h1 {
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+button {
+  padding: 8px 12px;
+  font-size: 14px;
+  margin: 5px;
+  cursor: pointer;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  transition: background 0.3s;
+}
+
+button:hover {
+  background-color: #45a049;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid; /* Grid 레이아웃 적용 */
+  grid-template-columns: repeat(3, 1fr); /* 3열로 나눔 */
+  gap: 10px; /* 아이템 간의 간격 */
+  max-height: 300px; /* 최대 높이 설정 */
+  overflow-y: scroll; /* 항상 세로 스크롤바 보이게 */
+}
+
+li {
+  background: #f4f4f4;
+  padding: 8px;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+input[type='checkbox'] {
+  margin-right: 10px;
+}

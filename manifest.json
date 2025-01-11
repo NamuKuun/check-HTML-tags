@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "HTML Tag Viewer",
+  "description": "An essential tool for exploring and highlighting HTML tags on your page",
+  "permissions": ["scripting", "activeTab"],
+  "host_permissions": ["<all_urls>"],
+  "version": "1.0",
+  "icons": {
+    "16": "img/pngegg.png"
+  },
+  "action": {
+    "default_icon": "img/pngegg.png",
+    "default_title": "HTML Tag Viewer",
+    "default_popup": "popup/popup.html"
+  }
+}
