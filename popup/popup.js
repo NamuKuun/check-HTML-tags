@@ -1,4 +1,4 @@
-// 활성 탭에서 body 태그 내부의 HTML 태그 가져오기 및 체크박스 이벤트 처리
+// Get HTML tags inside the <body> tag of the active tab and handle checkbox events
 function getTags() {
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     const tabId = tabs[0].id;
@@ -7,7 +7,7 @@ function getTags() {
       {
         target: { tabId: tabId },
         func: () => {
-          // <body> 내부의 모든 태그를 가져오고, 중복을 제거한 후 배열로 반환
+          // Get all tags inside <body>, remove duplicates, and return as an array
           const tags = Array.from(
             new Set([...document.body.querySelectorAll('*')].map((el) => el.tagName.toLowerCase()))
           );
@@ -25,7 +25,8 @@ function getTags() {
     );
   });
 }
-// 태그 목록 표시 및 클릭 이벤트 연결
+
+// Display the tag list and bind click events
 function displayTags(tags, tabId) {
   tags.sort();
 
@@ -40,13 +41,13 @@ function displayTags(tags, tabId) {
     })
     .join('');
 
-  // li 클릭 시 태그 강조 표시 및 말풍선 표시
+  // Add click event to each li item for highlighting and tooltip
   document.querySelectorAll('.tag-item').forEach((li) => {
     li.addEventListener('click', () => {
       const tag = li.getAttribute('data-tag');
-      console.log(`Tag clicked: ${tag}`); // 로그 추가
+      console.log(`Tag clicked: ${tag}`); // Added log for debugging
 
-      // 현재 상태에 따라 강조 표시 또는 해제
+      // Highlight or remove highlight based on current state
       if (li.classList.contains('highlighted')) {
         removeHighlight(tag, tabId, li);
         li.classList.remove('highlighted');
@@ -57,27 +58,28 @@ function displayTags(tags, tabId) {
     });
   });
 
-  // 전체 해제 버튼
+  // "Uncheck All" button event
   document.getElementById('uncheck-all').addEventListener('click', () => {
     document.querySelectorAll('.tag-item').forEach((li) => {
       const tag = li.getAttribute('data-tag');
-      removeHighlight(tag, tabId, li); // 모든 태그 강조 해제
+      removeHighlight(tag, tabId, li); // Remove highlight from all tags
       li.classList.remove('highlighted');
     });
   });
 }
-// 선택된 태그를 강조 표시 (스타일 직접 변경) 및 말풍선 표시
+
+// Highlight selected tag (change style directly) and display tooltip
 function highlightTag(tag, tabId, liElement) {
   chrome.scripting.executeScript({
     target: { tabId: tabId },
     func: (tagName) => {
       const elements = document.querySelectorAll(tagName);
       elements.forEach((el) => {
-        // 배경색과 테두리 설정
-        el.style.backgroundColor = 'rgba(128, 128, 128, 0.2)'; // 얇은 회색 배경
-        el.style.border = '2px solid #0091ff'; // 파란색 테두리
+        // Set background color and border
+        el.style.backgroundColor = 'rgba(128, 128, 128, 0.2)'; // Light gray background
+        el.style.border = '2px solid #0091ff'; // Blue border
 
-        // 말풍선 div 생성
+        // Create tooltip div
         const tooltip = document.createElement('div');
         tooltip.style.position = 'absolute';
         tooltip.style.backgroundColor = '#333';
@@ -87,27 +89,27 @@ function highlightTag(tag, tabId, liElement) {
         tooltip.style.fontSize = '12px';
         tooltip.style.zIndex = '9999';
         tooltip.style.maxWidth = '200px';
-        tooltip.style.whiteSpace = 'normal'; // 줄 바꿈을 허용
+        tooltip.style.whiteSpace = 'normal'; // Allow text wrap
         tooltip.style.boxShadow = '0 0 10px rgba(0, 0, 0, 0.3)';
 
-        // 태그명, 클래스명, id, name 속성 표시 (각각 다른 색상)
+        // Display tag name, class, id, and name attributes (in different colors)
         const tagInfo = `
           <span style="color: #ff7f50;">Tag: ${tagName}</span> 
           ${el.className ? `<br><span style="color: #87ceeb;">Class: ${el.className}</span>` : ''}
           ${el.id ? `<br><span style="color: #98fb98;">ID: ${el.id}</span>` : ''}
           ${el.name ? `<br><span style="color: #ffff00;">Name: ${el.name}</span>` : ''}
         `;
-        tooltip.innerHTML = tagInfo; // innerHTML로 삽입하여 스타일 적용
+        tooltip.innerHTML = tagInfo; // Set innerHTML to apply styles
 
-        // 말풍선 위치 설정
+        // Set tooltip position
         const rect = el.getBoundingClientRect();
         tooltip.style.left = `${rect.left + window.scrollX}px`;
-        tooltip.style.top = `${rect.top + window.scrollY - 30}px`; // 위로 30px 떨어지게 위치 조정
+        tooltip.style.top = `${rect.top + window.scrollY - 30}px`; // Adjust 30px above the element
 
-        // body에 말풍선 추가
+        // Append tooltip to the body
         document.body.appendChild(tooltip);
 
-        // 말풍선 클릭 시 제거
+        // Remove tooltip on click
         el.addEventListener('click', () => {
           tooltip.remove();
         });
@@ -116,24 +118,24 @@ function highlightTag(tag, tabId, liElement) {
     args: [tag],
   });
 
-  // 목록 항목 스타일 변경
-  liElement.style.backgroundColor = 'rgba(128, 128, 128, 0.2)'; // 얇은 회색 배경
-  liElement.style.border = '2px solid #0091ff'; // 파란색 테두리
+  // Change list item style
+  liElement.style.backgroundColor = 'rgba(128, 128, 128, 0.2)'; // Light gray background
+  liElement.style.border = '2px solid #0091ff'; // Blue border
 }
 
-// 선택된 태그에서 강조 제거 및 스타일 원래대로 돌리기
+// Remove highlight from the selected tag and reset styles
 function removeHighlight(tag, tabId, liElement) {
   chrome.scripting.executeScript({
     target: { tabId: tabId },
     func: (tagName) => {
-      // 강조 제거 (배경색 초기화)
+      // Remove highlight (reset background color)
       const elements = document.querySelectorAll(tagName);
       elements.forEach((el) => {
-        el.style.backgroundColor = ''; // 기존 배경색 초기화
+        el.style.backgroundColor = ''; // Reset background color
         el.style.border = '';
       });
 
-      // 해당 태그의 말풍선이 있다면 제거
+      // Remove tooltip if it exists for this tag
       const tooltips = document.querySelectorAll('div[style*="position: absolute"]');
       tooltips.forEach((tooltip) => {
         const tooltipText = tooltip.textContent;
@@ -145,10 +147,10 @@ function removeHighlight(tag, tabId, liElement) {
     args: [tag],
   });
 
-  // 목록 항목 스타일 원래대로 복원
-  liElement.style.backgroundColor = ''; // 배경색 초기화
-  liElement.style.border = ''; // 테두리 초기화
+  // Reset list item style
+  liElement.style.backgroundColor = ''; // Reset background color
+  liElement.style.border = ''; // Reset border
 }
 
-// 확장 프로그램 실행 시 태그 목록 로드
+// Load tag list when the extension is executed
 document.addEventListener('DOMContentLoaded', getTags);
