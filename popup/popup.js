@@ -25,9 +25,11 @@ function getTags() {
     );
   });
 }
-
 // 태그 목록 표시 및 체크박스 이벤트 연결
 function displayTags(tags, tabId) {
+  // 태그 배열을 알파벳 순으로 정렬
+  tags.sort();
+
   const tagList = document.getElementById('tag-list');
   tagList.innerHTML = tags
     .map((tag) => {
