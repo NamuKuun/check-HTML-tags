@@ -25,66 +25,49 @@ function getTags() {
     );
   });
 }
-
-// 태그 목록 표시 및 체크박스 이벤트 연결
+// 태그 목록 표시 및 클릭 이벤트 연결
 function displayTags(tags, tabId) {
+  tags.sort();
+
   const tagList = document.getElementById('tag-list');
   tagList.innerHTML = tags
     .map((tag) => {
       return `
-        <li>
-          <input type="checkbox" class="tag-checkbox" data-tag="${tag}" /> 
+        <li class="tag-item" data-tag="${tag}">
           <span class="tag-name">${tag}</span>
         </li>
       `;
     })
     .join('');
 
-  // 체크박스 클릭 시 태그 강조 표시
-  document.querySelectorAll('.tag-checkbox').forEach((checkbox) => {
-    checkbox.addEventListener('change', () => {
-      const tag = checkbox.getAttribute('data-tag');
-      if (checkbox.checked) {
-        highlightTag(tag, tabId);
-      } else {
-        removeHighlight(tag, tabId);
-      }
-    });
-  });
-
-  // li 클릭 시 체크박스 상태 변경
-  document.querySelectorAll('li').forEach((li) => {
+  // li 클릭 시 태그 강조 표시 및 말풍선 표시
+  document.querySelectorAll('.tag-item').forEach((li) => {
     li.addEventListener('click', () => {
-      const checkbox = li.querySelector('.tag-checkbox');
-      checkbox.checked = !checkbox.checked; // 체크박스 상태 변경
+      const tag = li.getAttribute('data-tag');
+      console.log(`Tag clicked: ${tag}`); // 로그 추가
 
-      // 상태에 따라 강조 표시
-      const tag = checkbox.getAttribute('data-tag');
-      if (checkbox.checked) {
-        highlightTag(tag, tabId);
+      // 현재 상태에 따라 강조 표시 또는 해제
+      if (li.classList.contains('highlighted')) {
+        removeHighlight(tag, tabId, li);
+        li.classList.remove('highlighted');
       } else {
-        removeHighlight(tag, tabId);
+        highlightTag(tag, tabId, li);
+        li.classList.add('highlighted');
       }
     });
   });
 
   // 전체 해제 버튼
   document.getElementById('uncheck-all').addEventListener('click', () => {
-    document.querySelectorAll('.tag-checkbox').forEach((checkbox) => {
-      checkbox.checked = false;
-      const tag = checkbox.getAttribute('data-tag');
-      removeHighlight(tag, tabId); // 모든 태그 강조 해제
+    document.querySelectorAll('.tag-item').forEach((li) => {
+      const tag = li.getAttribute('data-tag');
+      removeHighlight(tag, tabId, li); // 모든 태그 강조 해제
+      li.classList.remove('highlighted');
     });
   });
 }
-
-// 태그가 없을 때 메시지 표시
-function displayNoTagsMessage() {
-  const tagList = document.getElementById('tag-list');
-  tagList.innerHTML = '<li>No tags found on this page.</li>';
-}
 // 선택된 태그를 강조 표시 (스타일 직접 변경) 및 말풍선 표시
-function highlightTag(tag, tabId) {
+function highlightTag(tag, tabId, liElement) {
   chrome.scripting.executeScript({
     target: { tabId: tabId },
     func: (tagName) => {
@@ -107,14 +90,14 @@ function highlightTag(tag, tabId) {
         tooltip.style.whiteSpace = 'normal'; // 줄 바꿈을 허용
         tooltip.style.boxShadow = '0 0 10px rgba(0, 0, 0, 0.3)';
 
-        // 태그명, 클래스명, id, name 속성 표시
+        // 태그명, 클래스명, id, name 속성 표시 (각각 다른 색상)
         const tagInfo = `
-          Tag: ${tagName} 
-          ${el.className ? `| Class: ${el.className}` : ''}
-          ${el.id ? `| ID: ${el.id}` : ''}
-          ${el.name ? `| Name: ${el.name}` : ''}
+          <span style="color: #ff7f50;">Tag: ${tagName}</span> 
+          ${el.className ? `<br><span style="color: #87ceeb;">Class: ${el.className}</span>` : ''}
+          ${el.id ? `<br><span style="color: #98fb98;">ID: ${el.id}</span>` : ''}
+          ${el.name ? `<br><span style="color: #ffff00;">Name: ${el.name}</span>` : ''}
         `;
-        tooltip.textContent = tagInfo;
+        tooltip.innerHTML = tagInfo; // innerHTML로 삽입하여 스타일 적용
 
         // 말풍선 위치 설정
         const rect = el.getBoundingClientRect();
@@ -124,24 +107,22 @@ function highlightTag(tag, tabId) {
         // body에 말풍선 추가
         document.body.appendChild(tooltip);
 
-        // 체크박스 상태를 확인하여 말풍선 제거
-        const checkbox = document.querySelector(`#checkbox-${tagName}`);
-        if (checkbox) {
-          checkbox.addEventListener('change', () => {
-            // 체크박스 해제 시 말풍선 제거
-            if (!checkbox.checked) {
-              tooltip.remove();
-            }
-          });
-        }
+        // 말풍선 클릭 시 제거
+        el.addEventListener('click', () => {
+          tooltip.remove();
+        });
       });
     },
     args: [tag],
   });
+
+  // 목록 항목 스타일 변경
+  liElement.style.backgroundColor = 'rgba(128, 128, 128, 0.2)'; // 얇은 회색 배경
+  liElement.style.border = '2px solid #0091ff'; // 파란색 테두리
 }
 
-// 선택된 태그에서 강조 제거
-function removeHighlight(tag, tabId) {
+// 선택된 태그에서 강조 제거 및 스타일 원래대로 돌리기
+function removeHighlight(tag, tabId, liElement) {
   chrome.scripting.executeScript({
     target: { tabId: tabId },
     func: (tagName) => {
@@ -163,6 +144,10 @@ function removeHighlight(tag, tabId) {
     },
     args: [tag],
   });
+
+  // 목록 항목 스타일 원래대로 복원
+  liElement.style.backgroundColor = ''; // 배경색 초기화
+  liElement.style.border = ''; // 테두리 초기화
 }
 
 // 확장 프로그램 실행 시 태그 목록 로드
